@@ -433,7 +433,6 @@ function toggleTodoTaskStatus(taskId, isCompleted) {
 // Filter todo tasks 
 function filterTodoTasks() {
     console.log('Filtering tasks:', currentTodoFilter);
-
     $.ajax({
         url: '/Todo/FilterTasks',
         type: 'POST',
@@ -448,12 +447,15 @@ function filterTodoTasks() {
             }
         },
         error: function () {
+            console.log(data)
             showTodoAlert('Error filtering tasks', 'danger');
         }
     });
 }
 
-// Toggle filter functionality
+    // Toggle filter functionality
+
+    // None of the filters are working Priority, Status, Task or search filter
 function toggleTodoFilter(filterType, value, buttonElement) {
     const isActive = buttonElement.hasClass('active');
 
