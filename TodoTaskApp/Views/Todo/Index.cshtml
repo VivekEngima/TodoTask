@@ -1,0 +1,137 @@
+﻿@model IEnumerable<TodoTaskViewModal>
+@{
+    ViewData["Title"] = "Todo Tasks";
+}
+
+<div class="row">
+    <!-- Left Sidebar - Filters -->
+    <div class="col-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-filter me-2"></i>Filters</h6>
+            </div>
+            <div class="card-body">
+                <form id="filterForm">
+                    <div class="mb-3">
+                        <label class="form-label">Search</label>
+                        <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Search tasks...">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Task</label>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm filter-btn" data-filter="upcoming">
+                                <i class="fas fa-clock me-1"></i>Upcoming
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm filter-btn" data-filter="today">
+                                <i class="fas fa-calendar-day me-1"></i>Today
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm filter-btn" data-filter="calendar">
+                                <i class="fas fa-calendar me-1"></i>Calendar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Priority</label>
+                        <div class="d-grid gap-1">
+                            <button type="button" class="btn btn-outline-secondary btn-sm priority-btn" data-priority="Normal">
+                                Normal
+                            </button>
+                            <button type="button" class="btn btn-outline-warning btn-sm priority-btn" data-priority="High">
+                                High
+                            </button>
+                            <button type="button" class="btn btn-outline-info btn-sm priority-btn" data-priority="Low">
+                                Low
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <div class="d-grid gap-1">
+                            <button type="button" class="btn btn-outline-primary btn-sm status-btn" data-status="Pending">
+                                Pending
+                            </button>
+                            <button type="button" class="btn btn-outline-warning btn-sm status-btn" data-status="Hold">
+                                Hold
+                            </button>
+                            <button type="button" class="btn btn-outline-success btn-sm status-btn" data-status="Completed">
+                                Completed
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="settings-section mt-4">
+                    <button type="button" class="btn btn-outline-dark btn-sm w-100">
+                        <i class="fas fa-cog me-1"></i>Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <h5 class="mb-0 me-3">Tasks</h5>
+                    <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#taskModal" onclick="openCreateModal()">
+                        <i class="fas fa-plus me-1"></i>Add Task
+                    </button>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-secondary me-2" id="taskCount">@Model.Count() tasks</span>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshTasks()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="tasksTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 40%">Tasks</th>
+                                <th style="width: 15%">Priority</th>
+                                <th style="width: 15%">Status</th>
+                                <th style="width: 20%">Due / Complete On</th>
+                                <th style="width: 10%">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tasksBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" placeholder="Type here to create new task..." id="quickAddInput">
+                                        <button class="btn btn-primary" type="button" onclick="quickAddTask()">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Task Modal -->
+@await Html.PartialAsync("_TaskModal")
+
+<!-- Loading Spinner -->
+<div class="d-none" id="loadingSpinner">
+    <div class="position-fixed top-50 start-50 translate-middle">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/todo.js"></script>
+}

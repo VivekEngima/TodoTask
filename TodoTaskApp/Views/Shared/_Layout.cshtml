@@ -1,0 +1,111 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Todo Task App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-primary border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold" asp-area="" asp-controller="Todo" asp-action="Index">
+                    <i class="fas fa-tasks me-2"></i>Todo Task App
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Todo" ? "active" : "")"
+                               asp-area="" asp-controller="Todo" asp-action="Index">
+                                <i class="fas fa-list me-1"></i>My Tasks
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="">
+                                <i class="fas fa-home me-1"></i>Welcome
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">
+                                <i class="fas fa-shield-alt me-1"></i>Privacy
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- Quick Actions in Navbar -->
+                    <div class="d-flex align-items-center">
+                        @if (ViewContext.RouteData.Values["Controller"]?.ToString() == "Todo")
+                        {
+                            <button type="button" class="btn btn-outline-light btn-sm me-2"
+                                    data-bs-toggle="modal" data-bs-target="#taskModal" onclick="openCreateModal()">
+                                <i class="fas fa-plus me-1"></i>Add Task
+                            </button>
+                        }
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle me-1"></i>Menu
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Todo" asp-action="Index">
+                                        <i class="fas fa-tasks me-2"></i>Tasks Dashboard
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Home" asp-action="Welcome">
+                                        <i class="fas fa-home me-2"></i>Welcome Page
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Home" asp-action="Privacy">
+                                        <i class="fas fa-shield-alt me-2"></i>Privacy Policy
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container-fluid">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+@*     <footer class="border-top footer text-muted bg-light mt-5">
+        <div class="container py-3">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="mb-0">
+                        &copy; 2024 - Todo Task App -
+                        <a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-decoration-none">Privacy</a>
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <small class="text-muted">
+                        <i class="fas fa-code me-1"></i>Built with ASP.NET Core 8 MVC
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+ *@
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
