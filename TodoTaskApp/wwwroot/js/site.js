@@ -465,15 +465,6 @@ function filterTasks() {
     });
 }
 
-// Refresh tasks
-function refreshTasks() {
-    loadTasks();
-    // Reset filters
-    currentFilter = { status: null, priority: null, searchTerm: null };
-    $('#searchInput').val('');
-    $('.filter-btn, .priority-btn, .status-btn').removeClass('active');
-}
-
 // Update task count
 function updateTaskCount(count) {
     $('#taskCount').text(`${count} task${count !== 1 ? 's' : ''}`);
