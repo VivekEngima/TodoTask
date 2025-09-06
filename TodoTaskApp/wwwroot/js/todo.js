@@ -1,16 +1,20 @@
-﻿// Todo.js - Fixed version with all CRUD operations and filters working
-// This file handles all Todo-related AJAX operations and UI interactions
-
+﻿// This file handles all Todo-related AJAX operations and UI interactions
 
 // Global variables for Todo functionality
-let currentTodoFilter = {
-    status: null,
-    priority: null,
-    searchTerm: null
-};
-let editingTodoTaskId = 0;
-let todoTasks = [];
+//let currentTodoFilter = {
+//    status: null,
+//    priority: null,
+//    searchTerm: null
+//};
+//let editingTodoTaskId = 0;
+//let todoTasks = [];
 
+
+(function () {
+    // IIFE‐scoped variables – keep these
+    let currentTodoFilter = { status: null, priority: null, searchTerm: null };
+    let editingTodoTaskId = 0;
+    let todoTasks = [];
 // Initialize Todo page when document is ready
 $(document).ready(function () {
     if (window.location.pathname.toLowerCase().includes('todo') || window.location.pathname === '/') {
@@ -316,7 +320,7 @@ function editTodoTask(taskId) {
     }
 }
 
-// Save todo task (create or update) - FIXED
+// Save todo task (create or update)
 function saveTodoTask() {
     const formData = {
         Id: parseInt($('#taskId').val()) || 0,
@@ -426,7 +430,7 @@ function toggleTodoTaskStatus(taskId, isCompleted) {
     });
 }
 
-// Filter todo tasks - FIXED
+// Filter todo tasks 
 function filterTodoTasks() {
     console.log('Filtering tasks:', currentTodoFilter);
 
@@ -746,3 +750,5 @@ if (typeof module !== 'undefined' && module.exports) {
 }
 
 console.log('Todo.js loaded successfully - ALL BUGS FIXED');
+
+}) ();
