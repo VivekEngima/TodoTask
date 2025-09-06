@@ -28,17 +28,6 @@
                             </a>
                         </li>
                     </ul>
-
-                    <!-- Quick Actions in Navbar -->
-                    <div class="d-flex align-items-center">
-                        @if (ViewContext.RouteData.Values["Controller"]?.ToString() == "Todo")
-                        {
-                            <button type="button" class="btn btn-outline-light btn-sm me-2"
-                                    data-bs-toggle="modal" data-bs-target="#taskModal" onclick="openCreateModal()">
-                                <i class="fas fa-plus me-1"></i>Add Task
-                            </button>
-                        }
-                    </div>
                 </div>
             </div>
         </nav>

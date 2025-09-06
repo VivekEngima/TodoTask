@@ -1,270 +1,272 @@
 ﻿// This file handles all Todo-related AJAX operations and UI interactions
 
-// Global variables for Todo functionality
-//let currentTodoFilter = {
-//    status: null,
-//    priority: null,
-//    searchTerm: null
-//};
-//let editingTodoTaskId = 0;
-//let todoTasks = [];
-
-
 (function () {
-    // IIFE‐scoped variables – keep these
+    // Scoped variables
     let currentTodoFilter = { status: null, priority: null, searchTerm: null };
     let editingTodoTaskId = 0;
     let todoTasks = [];
-    // Initialize Todo page when document is ready
+
+    // Initialize when DOM is ready
     $(document).ready(function () {
-        if (window.location.pathname.toLowerCase().includes('todo') || window.location.pathname === '/') {
-            initializeTodoPage();
-            loadAllTodos();
-            setupTodoEventHandlers();
-        }
+        initializeTodoPage();
+        loadAllTodos();
+        setupTodoEventHandlers();
     });
 
-    // Initialize Todo page specific functionality
+    // Set up page defaults
     function initializeTodoPage() {
-        console.log('Initializing Todo Task App...');
-
-        // Set default due date to 7 days from now
+        // Default due date = today + 7 days
         const defaultDueDate = new Date();
         defaultDueDate.setDate(defaultDueDate.getDate() + 7);
         $('#taskDueDate').val(defaultDueDate.toISOString().split('T')[0]);
 
-        // Initialize Bootstrap tooltips
         initializeTooltips();
-
-        // Initialize anti-forgery token
         setupAntiForgeryToken();
-
-        console.log('Todo app initialized successfully');
     }
 
-    // Setup event handlers specific to Todo functionality
+    // Bind UI event handlers
     function setupTodoEventHandlers() {
-        // Task form submission
+        // Refresh button
+        $('#refreshBtn').off('click').on('click', function () {
+            // Clear filters
+            currentTodoFilter = { status: null, priority: null, searchTerm: null };
+            $('.status-btn, .priority-btn, .filter-btn').removeClass('active');
+            $('#searchInput').val('');
+            // Reload tasks
+            loadAllTodos();
+        });
+        // Inside setupTodoEventHandlers()
+        $('#addTaskBtn').off('click').on('click', function () {
+            resetTodoTaskForm();
+            $('#taskModalLabel').html('<i class="fas fa-plus-circle me-2"></i>Add New Task');
+            $('#saveTaskBtn').html('<i class="fas fa-save me-1"></i>Save Task');
+            // Show modal
+            new bootstrap.Modal(document.getElementById('taskModal')).show();
+        });
+        // Create/update form
         $('#taskForm').off('submit').on('submit', function (e) {
             e.preventDefault();
             saveTodoTask();
         });
-
-        // Search input with debounce
+        // Search
         $('#searchInput').off('keyup').on('keyup', debounce(function () {
             let val = $(this).val();
             if (typeof val !== 'string') val = '';
-            const searchTerm = val.trim();
-            currentTodoFilter.searchTerm = searchTerm || null;
-            filterTodoTasks();
+            currentTodoFilter.searchTerm = val.trim() || null;
+            displayFilteredTasks();
         }, 300));
-
-        // Quick add task functionality
-        $(document).off('keypress', '#quickAddInput').on('keypress', '#quickAddInput', function (e) {
-            if (e.which === 13) { // Enter key
+        // Quick add
+        $('#quickAddInput').off('keypress').on('keypress', function (e) {
+            if (e.which === 13) {
                 e.preventDefault();
                 quickAddTodoTask();
             }
         });
 
-        // Filter buttons - Status
+        // Status filter
         $('.status-btn').off('click').on('click', function () {
-            const status = $(this).data('status');
-            toggleTodoFilter('status', status, $(this));
+            const statusValue = $(this).data('status');
+            const wasActive = $(this).hasClass('active');
+
+            // Toggle this button
+            $('.status-btn').removeClass('active');
+            currentTodoFilter.status = wasActive ? null : statusValue;
+            if (!wasActive) $(this).addClass('active');
+
+            // Re-display tasks with both filters applied
+            displayFilteredTasks();
         });
 
-        // Filter buttons - Priority  
+        // Priority filter
         $('.priority-btn').off('click').on('click', function () {
-            const priority = $(this).data('priority');
-            toggleTodoFilter('priority', priority, $(this));
-        });
+            const priorityValue = $(this).data('priority');
+            const wasActive = $(this).hasClass('active');
 
-        // Filter buttons - General
+            // Toggle this button
+            $('.priority-btn').removeClass('active');
+            currentTodoFilter.priority = wasActive ? null : priorityValue;
+            if (!wasActive) $(this).addClass('active');
+
+            // Re-display tasks with both filters applied
+            displayFilteredTasks();
+        });
+        // General filters
         $('.filter-btn').off('click').on('click', function () {
-            const filterType = $(this).data('filter');
-            handleGeneralFilter(filterType);
+            const type = $(this).data('filter');
+            $('.filter-btn').removeClass('active');
+            $(this).addClass('active');
+            applyGeneralFilter(type);
         });
-
-        // Modal events
-        $('#taskModal').off('hidden.bs.modal').on('hidden.bs.modal', function () {
-            resetTodoTaskForm();
-        });
-
-        // Checkbox change events (delegated)
+        // Modal hide
+        $('#taskModal').off('hidden.bs.modal').on('hidden.bs.modal', resetTodoTaskForm);
+        // Checkbox toggle
         $(document).off('change', '.task-checkbox').on('change', '.task-checkbox', function () {
-            const taskId = $(this).data('task-id');
-            const isCompleted = $(this).is(':checked');
-            toggleTodoTaskStatus(taskId, isCompleted);
+            const id = $(this).data('task-id');
+            toggleTodoTaskStatus(id, $(this).is(':checked'));
         });
     }
 
-    // Load all todos from server
+    // Load tasks from server
     function loadAllTodos() {
         showTodoLoading(true);
-
         $.ajax({
             url: '/Todo/GetAllTasks',
             type: 'GET',
-            cache: false,
-            success: function (response) {
-                if (response && response.success) {
-                    todoTasks = response.data || [];
-                    displayTodoTasks(todoTasks);
-                    updateTodoTaskCount(todoTasks.length);
-                    console.log(`Loaded ${todoTasks.length} tasks`);
-                } else {
-                    console.error('Failed to load tasks:', response?.message);
-                    showTodoAlert('Error loading tasks: ' + (response?.message || 'Unknown error'), 'danger');
-                    displayTodoTasks([]);
-                }
-            },
-            error: function (xhr, status, error) {
-                console.error('AJAX Error loading tasks:', error);
-                showTodoAlert('Error connecting to server. Please check your connection.', 'danger');
-                displayTodoTasks([]);
-            },
-            complete: function () {
-                showTodoLoading(false);
-            }
-        });
+            cache: false
+        })
+            .done(response => {
+                todoTasks = response.success ? response.data || [] : [];
+                displayFilteredTasks();
+            })
+            .fail(() => {
+                showTodoAlert('Error loading tasks', 'danger');
+                todoTasks = [];
+                displayFilteredTasks();
+            })
+            .always(() => showTodoLoading(false));
     }
 
-    // Display tasks in the table
-    function displayTodoTasks(tasks) {
-        const tbody = $('#tasksBody');
-        tbody.empty();
+    // Display tasks using filters
+    function displayFilteredTasks() {
+        let list = todoTasks.slice();
 
-        // Always show the quick add row first
-        const quickAddRow = createQuickAddRow();
-        tbody.append(quickAddRow);
-
-        if (!tasks || tasks.length === 0) {
-            const emptyRow = `
-            <tr>
-                <td colspan="5" class="text-center py-4 text-muted">
-                    <i class="fas fa-inbox fa-3x mb-3"></i>
-                    <p class="mb-0">No tasks found. Create your first task above!</p>
-                </td>
-            </tr>
-        `;
-            tbody.append(emptyRow);
-            return;
+        // Text search
+        if (currentTodoFilter.searchTerm) {
+            const term = currentTodoFilter.searchTerm.toLowerCase();
+            list = list.filter(t =>
+                (t.Title || '').toLowerCase().includes(term) ||
+                (t.Description || '').toLowerCase().includes(term)
+            );
+        }
+        // Status
+        if (currentTodoFilter.status) {
+            list = list.filter(t => t.Status === currentTodoFilter.status);
+        }
+        // Priority
+        if (currentTodoFilter.priority) {
+            list = list.filter(t => t.Priority === currentTodoFilter.priority);
         }
 
-        // Sort tasks by creation date (newest first)
-        const sortedTasks = tasks.sort((a, b) => new Date(b.CreatedDate) - new Date(a.CreatedDate));
-
-        sortedTasks.forEach(task => {
-            const row = createTodoTaskRow(task);
-            tbody.append(row);
-        });
-
-        // Reinitialize tooltips for new content
-        initializeTooltips();
+        renderTaskTable(list);
     }
 
-    // Create quick add row
+    // Render table
+    function renderTaskTable(tasks) {
+        const tbody = $('#tasksBody').empty();
+        tbody.append(createQuickAddRow());
+
+        if (!tasks.length) {
+            tbody.append(`
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        No tasks found.
+                    </td>
+                </tr>
+            `);
+        } else {
+            tasks.forEach(t => tbody.append(createTodoTaskRow(t)));
+        }
+        initializeTooltips();
+        updateTodoTaskCount(tasks.length);
+    }
+
+    // Quick add row HTML
     function createQuickAddRow() {
         return `
-        <tr class="bg-light">
-            <td colspan="5" class="border-bottom">
-                <div class="input-group">
-                    <span class="input-group-text">
-                        <i class="fas fa-plus text-primary"></i>
-                    </span>
-                    <input type="text" class="form-control" 
-                           placeholder="Type here to create new task..." 
-                           id="quickAddInput"
-                           maxlength="100">
-                    <button class="btn btn-primary" type="button" onclick="quickAddTodoTask()">
-                        <i class="fas fa-plus me-1"></i>Add
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `;
+            <tr class="bg-light">
+                <td colspan="5" class="border-bottom">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-plus text-primary"></i></span>
+                        <input type="text" id="quickAddInput" class="form-control" maxlength="100"
+                               placeholder="Add new task...">
+                        <button class="btn btn-primary" onclick="quickAddTodoTask()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
     }
 
-    // Create task row HTML
-    function createTodoTaskRow(task) {
-        const priorityClass = getTodoPriorityClass(task.Priority);
-        const statusClass = getTodoStatusClass(task.Status);
-        const dueDateFormatted = formatTodoDate(task.DueDate);
-        const isOverdue = isTodoTaskOverdue(task);
-        const rowClass = isOverdue ? 'table-warning' : '';
-        const isCompleted = task.Status === 'Completed';
-        const textClass = isCompleted ? 'text-decoration-line-through text-muted' : '';
-
+    // Single task row HTML
+    function createTodoTaskRow(t) {
+        const isCompleted = t.Status === 'Completed';
+        const txtClass = isCompleted
+            ? 'text-decoration-line-through text-muted'
+            : '';
         return `
-        <tr class="${rowClass}" data-task-id="${task.Id}">
-            <td>
-                <div class="d-flex align-items-center">
-                    <input type="checkbox" 
-                           class="form-check-input me-2 task-checkbox" 
-                           data-task-id="${task.Id}"
-                           ${task.Status === 'Completed' ? 'checked' : ''}>
-                    <div class="flex-grow-1">
-                        <div class="fw-bold ${textClass}">${escapeHtml(task.Title)}</div>
-                        ${task.Description ? `<small class="${textClass}">${escapeHtml(task.Description)}</small>` : ''}
+            <tr data-task-id="${t.Id}">
+                <td>
+                    <div class="d-flex align-items-center">
+                        <input type="checkbox" class="form-check-input me-2 task-checkbox"
+                               data-task-id="${t.Id}" ${isCompleted ? 'checked' : ''}>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold ${txtClass}">${escapeHtml(t.Title)}</div>
+                            ${t.Description
+                ? `<small class="${txtClass}">${escapeHtml(t.Description)}</small>`
+                : ''}
+                        </div>
                     </div>
-                </div>
-            </td>
-            <td>
-                <span class="badge ${priorityClass}">${task.Priority}</span>
-            </td>
-            <td>
-                <span class="badge ${statusClass}">${task.Status}</span>
-            </td>
-            <td>
-                <small class="text-muted">
-                    ${getTodoDateDisplay(task)}
-                    ${isOverdue ? '<i class="fas fa-exclamation-triangle text-warning ms-1" title="Overdue"></i>' : ''}
-                </small>
-            </td>
-            <td>
-                <div class="btn-group btn-group-sm" role="group">
-                    <button type="button" 
-                            class="btn btn-outline-primary btn-sm" 
-                            onclick="editTodoTask(${task.Id})" 
-                            title="Edit Task"
-                            data-bs-toggle="tooltip">
+                </td>
+                <td><span class="badge ${getBadgeClass(t.Priority, 'priority')}">${t.Priority}</span></td>
+                <td><span class="badge ${getBadgeClass(t.Status, 'status')}">${t.Status}</span></td>
+                <td><small class="text-muted">${formatTodoDate(t.DueDate)}</small></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editTodoTask(${t.Id})">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button type="button" 
-                            class="btn btn-outline-danger btn-sm" 
-                            onclick="deleteTodoTask(${task.Id})" 
-                            title="Delete Task"
-                            data-bs-toggle="tooltip">
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteTodoTask(${t.Id})">
                         <i class="fas fa-trash"></i>
                     </button>
-                </div>
-            </td>
-        </tr>
-    `;
+                </td>
+            </tr>`;
     }
 
-    // Quick add task functionality
+    // Apply Upcoming/Today/Calendar filters
+    function applyGeneralFilter(type) {
+        // Reset text/status/priority filters
+        currentTodoFilter = { status: null, priority: null, searchTerm: null };
+        $('.status-btn, .priority-btn').removeClass('active');
+        $('#searchInput').val('');
 
-    function quickAddTodoTask() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let filtered = [];
+        if (type === 'upcoming') {
+            filtered = todoTasks.filter(t => new Date(t.DueDate) > today);
+        } else if (type === 'today') {
+            filtered = todoTasks.filter(t => {
+                const d = new Date(t.DueDate);
+                d.setHours(0, 0, 0, 0);
+                return d.getTime() === today.getTime();
+            });
+        } else if (type === 'calendar') {
+            const input = prompt('Enter a date (YYYY-MM-DD):', today.toISOString().slice(0, 10));
+            const sel = new Date(input);
+            if (isNaN(sel)) { showTodoAlert('Invalid date', 'warning'); return; }
+            sel.setHours(0, 0, 0, 0);
+            filtered = todoTasks.filter(t => {
+                const d = new Date(t.DueDate);
+                d.setHours(0, 0, 0, 0);
+                return d.getTime() === sel.getTime();
+            });
+        }
+        showTodoAlert(`${type.charAt(0).toUpperCase() + type.slice(1)} filter applied`, 'info');
+        renderTaskTable(filtered);
+    }
+
+    function clearGeneralFilters() {
+        $('.filter-btn').removeClass('active');
+    }
+
+    // Quick add new task
+    window.quickAddTodoTask = function () {
         const input = $('#quickAddInput');
-        const title = input.val().trim();
-
-        if (!title) {
-            showTodoAlert('Please enter a task title', 'warning');
-            input.focus();
-            return;
-        }
-
-        if (title.length > 100) {
-            showTodoAlert('Task title cannot exceed 100 characters', 'warning');
-            return;
-        }
-
-        // Validate no special characters (basic validation)
-        if (!/^[a-zA-Z0-9\s]*$/.test(title)) {
-            showTodoAlert('Task title cannot contain special characters', 'warning');
-            return;
-        }
+        const title = (input.val() || '').trim();
+        if (!title) { showTodoAlert('Enter a title', 'warning'); input.focus(); return; }
+        if (title.length > 100) { showTodoAlert('Max 100 chars', 'warning'); return; }
+        if (!/^[a-zA-Z0-9\s]*$/.test(title)) { showTodoAlert('No special chars', 'warning'); return; }
 
         const task = {
             Id: 0,
@@ -272,62 +274,32 @@
             Description: '',
             Priority: 'Normal',
             Status: 'Pending',
-            DueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            DueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
         };
-
-        createTodoTask(task, function (success) {
+        createTodoTask(task, success => {
             if (success) {
                 input.val('');
-                loadAllTodos(); // Refresh the list
+                loadAllTodos();
             }
         });
-    }
+    };
 
-    // Open create modal
-    function openCreateModal() {
-        editingTodoTaskId = 0;
-        resetTodoTaskForm();
-        $('#taskModalLabel').html('<i class="fas fa-plus-circle me-2"></i>Add New Task');
-        $('#saveTaskBtn').html('<i class="fas fa-save me-1"></i>Save Task');
-        $('#taskModal').modal('show');
-    }
-
-    // Edit todo task
-    function editTodoTask(taskId) {
-        editingTodoTaskId = taskId;
-
-        const task = todoTasks.find(t => t.Id === taskId);
-        if (task) {
-            populateTodoTaskForm(task);
+    // Edit task
+    window.editTodoTask = function (id) {
+        editingTodoTaskId = id;
+        const t = todoTasks.find(x => x.Id === id);
+        if (t) {
+            populateTodoTaskForm(t);
             $('#taskModalLabel').html('<i class="fas fa-edit me-2"></i>Edit Task');
             $('#saveTaskBtn').html('<i class="fas fa-save me-1"></i>Update Task');
             $('#taskModal').modal('show');
-        } else {
-            // Fallback to server request
-            $.ajax({
-                url: '/Todo/GetTask',
-                type: 'GET',
-                data: { id: taskId },
-                success: function (response) {
-                    if (response && response.success) {
-                        populateTodoTaskForm(response.data);
-                        $('#taskModalLabel').html('<i class="fas fa-edit me-2"></i>Edit Task');
-                        $('#saveTaskBtn').html('<i class="fas fa-save me-1"></i>Update Task');
-                        $('#taskModal').modal('show');
-                    } else {
-                        showTodoAlert('Error loading task details: ' + (response?.message || 'Unknown error'), 'danger');
-                    }
-                },
-                error: function () {
-                    showTodoAlert('Error connecting to server', 'danger');
-                }
-            });
         }
-    }
+    };
 
-    // Save todo task (create or update)
+    // Save (create/update) task
     function saveTodoTask() {
-        const formData = {
+        const form = $('#taskForm');
+        const model = {
             Id: parseInt($('#taskId').val()) || 0,
             Title: $('#taskTitle').val().trim(),
             Description: $('#taskDescription').val().trim(),
@@ -335,427 +307,185 @@
             Status: $('#taskStatus').val(),
             DueDate: $('#taskDueDate').val()
         };
+        if (!validateTodoTaskForm(model)) return;
 
-        // Validate form
-        if (!validateTodoTaskForm(formData)) {
-            return;
-        }
-
-        const isUpdate = formData.Id > 0;
-        const url = isUpdate ? '/Todo/UpdateTask' : '/Todo/CreateTask';
-
-        // Show loading state
-        const saveBtn = $('#saveTaskBtn');
-        const originalText = saveBtn.html();
-        saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Saving...');
-
+        const url = model.Id > 0 ? '/Todo/UpdateTask' : '/Todo/CreateTask';
+        const btn = $('#saveTaskBtn'), txt = btn.html();
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Saving...');
         $.ajax({
-            url: url,
-            type: 'POST',
-            headers: {
-                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-            },
-            contentType: 'application/json',
-            data: JSON.stringify(formData),
-            success: function (response) {
-                if (response && response.success) {
+            url, type: 'POST', headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+            contentType: 'application/json', data: JSON.stringify(model)
+        })
+            .done(res => {
+                if (res.success) {
                     $('#taskModal').modal('hide');
-                    loadAllTodos(); // Refresh the list
-                    showTodoAlert(response.message || (isUpdate ? 'Task updated successfully' : 'Task created successfully'), 'success');
-                } else {
-                    showTodoTaskFormErrors(response.errors || [response.message || 'Unknown error']);
-                }
-            },
-            error: function (xhr, status, error) {
-                console.error('Error saving task:', error);
-                showTodoAlert('Error saving task. Please try again.', 'danger');
-            },
-            complete: function () {
-                // Restore button state
-                saveBtn.prop('disabled', false).html(originalText);
-            }
-        });
+                    loadAllTodos();
+                    showTodoAlert(res.message, 'success');
+                } else showTodoTaskFormErrors(res.errors || [res.message]);
+            })
+            .fail(() => showTodoAlert('Error saving', 'danger'))
+            .always(() => btn.prop('disabled', false).html(txt));
     }
 
-    // Delete todo task
-    function deleteTodoTask(taskId) {
-        const task = todoTasks.find(t => t.Id === taskId);
-        const taskTitle = task ? task.Title : 'this task';
+    // Delete task
+    window.deleteTodoTask = function (id) {
+        if (!confirm('Delete this task?')) return;
+        $.ajax({ url: '/Todo/DeleteTask', type: 'POST', headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() }, data: { id } })
+            .done(res => {
+                if (res.success) { loadAllTodos(); showTodoAlert(res.message, 'success'); }
+                else showTodoAlert(res.message, 'danger');
+            })
+            .fail(() => showTodoAlert('Error deleting', 'danger'));
+    };
 
-        if (!confirm(`Are you sure you want to delete "${taskTitle}"?`)) {
-            return;
-        }
-
+    // Toggle status
+    window.toggleTodoTaskStatus = function (id, completed) {
+        const status = completed ? 'Completed' : 'Pending';
         $.ajax({
-            url: '/Todo/DeleteTask',
-            type: 'POST',
-            headers: {
-                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-            },
-            data: { id: taskId },
-            success: function (response) {
-                if (response && response.success) {
-                    loadAllTodos(); // Refresh the list
-                    showTodoAlert(response.message || 'Task deleted successfully', 'success');
-                } else {
-                    showTodoAlert(response.message || 'Failed to delete task', 'danger');
-                }
-            },
-            error: function () {
-                showTodoAlert('Error deleting task', 'danger');
-            }
-        });
+            url: '/Todo/UpdateTaskStatus', type: 'POST',
+            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+            data: { id, status }
+        })
+            .done(res => {
+                if (res.success) loadAllTodos();
+                else showTodoAlert('Error updating status', 'danger');
+            })
+            .fail(() => showTodoAlert('Error updating status', 'danger'));
+    };
+
+    // Populate form for edit
+    function populateTodoTaskForm(t) {
+        $('#taskId').val(t.Id);
+        $('#taskTitle').val(t.Title);
+        $('#taskDescription').val(t.Description);
+        $('#taskPriority').val(t.Priority);
+        $('#taskStatus').val(t.Status);
+        $('#taskDueDate').val(t.DueDate.split('T')[0]);
     }
 
-    // Toggle task status (checkbox functionality)
-    function toggleTodoTaskStatus(taskId, isCompleted) {
-        const status = isCompleted ? 'Completed' : 'Pending';
-
-        $.ajax({
-            url: '/Todo/UpdateTaskStatus',
-            type: 'POST',
-            headers: {
-                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-            },
-            data: { id: taskId, status: status },
-            success: function (response) {
-                if (response && response.success) {
-                    loadAllTodos(); // Refresh to show updated status
-                } else {
-                    showTodoAlert('Error updating task status', 'danger');
-                    // Revert checkbox
-                    $(`.task-checkbox[data-task-id="${taskId}"]`).prop('checked', !isCompleted);
-                }
-            },
-            error: function () {
-                showTodoAlert('Error updating task status', 'danger');
-                // Revert checkbox
-                $(`.task-checkbox[data-task-id="${taskId}"]`).prop('checked', !isCompleted);
-            }
-        });
-    }
-
-    // Filter todo tasks 
-    function filterTodoTasks() {
-        console.log('Filtering tasks:', currentTodoFilter);
-        $.ajax({
-            url: '/Todo/FilterTasks',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(currentTodoFilter),
-            success: function (response) {
-                if (response && response.success) {
-                    displayTodoTasks(response.data);
-                    updateTodoTaskCount(response.data.length);
-                } else {
-                    showTodoAlert('Error filtering tasks', 'danger');
-                }
-            },
-            error: function () {
-                console.log(data)
-                showTodoAlert('Error filtering tasks', 'danger');
-            }
-        });
-    }
-
-    // Toggle filter functionality
-
-    // None of the filters are working Priority, Status, Task or search filter
-    function toggleTodoFilter(filterType, value, buttonElement) {
-        const isActive = buttonElement.hasClass('active');
-
-        // Remove active class from all buttons of the same type
-        $(`.${filterType}-btn`).removeClass('active');
-
-        if (isActive) {
-            // Deactivate filter
-            currentTodoFilter[filterType] = null;
-        } else {
-            // Activate filter
-            currentTodoFilter[filterType] = value;
-            buttonElement.addClass('active');
-        }
-
-        filterTodoTasks();
-    }
-
-    // Handle general filters (upcoming, today, calendar)
-    function handleGeneralFilter(filterType) {
-        switch (filterType) {
-            case 'upcoming':
-                // Show tasks due in next 7 days
-                showTodoAlert('Upcoming tasks filter applied', 'info');
-                break;
-            case 'today':
-                // Show tasks due today
-                showTodoAlert('Today\'s tasks filter applied', 'info');
-                break;
-            case 'calendar':
-                // Show calendar view (placeholder)
-                showTodoAlert('Calendar view coming soon!', 'info');
-                break;
-        }
-    }
-
-    // Refresh todos
-    function refreshTodos() {
-        // Reset all filters
-        currentTodoFilter = { status: null, priority: null, searchTerm: null };
-        $('#searchInput').val('');
-        $('.filter-btn, .priority-btn, .status-btn').removeClass('active');
-
-        // Reload tasks
-        loadAllTodos();
-        showTodoAlert('Tasks refreshed', 'success');
-    }
-
-    // Utility Functions
-    function createTodoTask(taskData, callback) {
-        $.ajax({
-            url: '/Todo/CreateTask',
-            type: 'POST',
-            headers: {
-                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-            },
-            contentType: 'application/json',
-            data: JSON.stringify(taskData),
-            success: function (response) {
-                if (response && response.success) {
-                    showTodoAlert(response.message || 'Task created successfully', 'success');
-                    if (callback) callback(true);
-                } else {
-                    showTodoAlert(response.message || 'Failed to create task', 'danger');
-                    if (callback) callback(false);
-                }
-            },
-            error: function () {
-                showTodoAlert('Error creating task', 'danger');
-                if (callback) callback(false);
-            }
-        });
-    }
-
-    function populateTodoTaskForm(task) {
-        $('#taskId').val(task.Id);
-        $('#taskTitle').val(task.Title || '');
-        $('#taskDescription').val(task.Description || '');
-        $('#taskPriority').val(task.Priority || 'Normal');
-        $('#taskStatus').val(task.Status || 'Pending');
-        $('#taskDueDate').val(task.DueDate ? task.DueDate.split('T')[0] : '');
-    }
-
+    // Reset form
     function resetTodoTaskForm() {
         $('#taskForm')[0].reset();
         $('#taskId').val(0);
         $('.is-invalid').removeClass('is-invalid');
         $('.invalid-feedback').hide();
         $('#taskAlert').addClass('d-none');
-
-        // Set default due date
-        const defaultDueDate = new Date();
-        defaultDueDate.setDate(defaultDueDate.getDate() + 7);
-        $('#taskDueDate').val(defaultDueDate.toISOString().split('T')[0]);
+        initializeTodoPage();
     }
 
-    function validateTodoTaskForm(formData) {
-        let isValid = true;
+    // Create/update via AJAX
+    function createTodoTask(task, cb) {
+        $.ajax({
+            url: '/Todo/CreateTask', type: 'POST',
+            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+            contentType: 'application/json', data: JSON.stringify(task)
+        })
+            .done(res => cb(res.success))
+            .fail(() => cb(false));
+    }
 
-        // Clear previous validation
+    // Helpers: formatting, badges, validation, alerts, tooltips, debounce
+
+    function getBadgeClass(val, type) {
+        if (type === 'priority') {
+            return val === 'High' ? 'bg-danger' : val === 'Low' ? 'bg-info' : 'bg-secondary';
+        } else {
+            return val === 'Completed' ? 'bg-success' : val === 'Hold' ? 'bg-warning text-dark' : 'bg-primary';
+        }
+    }
+    function formatTodoDate(d) { const dt = new Date(d); return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); }
+    function escapeHtml(t) { const e = document.createElement('div'); e.textContent = t; return e.innerHTML; }
+
+    function validateTodoTaskForm(m) {
+        let ok = true;
+        // Clear previous validation states
         $('.is-invalid').removeClass('is-invalid');
         $('.invalid-feedback').hide();
-
-        // Validate title
-        if (!formData.Title) {
+        // TITLE VALIDATION
+        const title = m.Title || '';
+        if (title.trim() === '') {
             $('#taskTitle').addClass('is-invalid');
             $('#titleError').text('Title is required').show();
-            isValid = false;
-        } else if (formData.Title.length > 100) {
+            ok = false;
+        }
+        else if (title.length > 100) {
             $('#taskTitle').addClass('is-invalid');
             $('#titleError').text('Title cannot exceed 100 characters').show();
-            isValid = false;
-        } else if (!/^[a-zA-Z0-9\s]*$/.test(formData.Title)) {
-            $('#taskTitle').addClass('is-invalid');
-            $('#titleError').text('Title cannot contain special characters').show();
-            isValid = false;
+            ok = false;
         }
-
-        // Validate description
-        if (formData.Description && formData.Description.length > 500) {
-            $('#taskDescription').addClass('is-invalid');
-            $('#descriptionError').text('Description cannot exceed 500 characters').show();
-            isValid = false;
-        } else if (formData.Description && !/^[a-zA-Z0-9\s]*$/.test(formData.Description)) {
-            $('#taskDescription').addClass('is-invalid');
-            $('#descriptionError').text('Description cannot contain special characters').show();
-            isValid = false;
+        else {
+            // Find invalid characters (anything not a letter, digit, or space)
+            const invalidChars = title.match(/[^a-zA-Z0-9 ]/g);
+            if (invalidChars) {
+                // Remove duplicates
+                const unique = [...new Set(invalidChars)].join(', ');
+                $('#taskTitle').addClass('is-invalid');
+                $('#titleError')
+                    .text(`Invalid character${invalidChars.length > 1 ? 's' : ''}: ${unique}`)
+                    .show();
+                ok = false;
+            }
         }
-
-        // Validate due date
-        if (!formData.DueDate) {
+        // DESCRIPTION VALIDATION
+        if (m.Description) {
+            const desc = m.Description;
+            if (desc.length > 500) {
+                $('#taskDescription').addClass('is-invalid');
+                $('#descriptionError').text('Description cannot exceed 500 characters').show();
+                ok = false;
+            }
+        }
+        // DUE DATE VALIDATION
+        if (!m.DueDate) {
             $('#taskDueDate').addClass('is-invalid');
             $('#dueDateError').text('Due date is required').show();
-            isValid = false;
+            ok = false;
         }
-
-        return isValid;
+        return ok;
     }
 
-    function showTodoTaskFormErrors(errors) {
-        let errorMessage = 'Please fix the following errors:<br>';
-        errors.forEach(error => {
-            errorMessage += '• ' + error + '<br>';
-        });
 
-        $('#taskAlert').removeClass('d-none alert-info').addClass('alert-danger').html(errorMessage);
+    function showTodoTaskFormErrors(errs) {
+        let html = 'Please fix errors:<br>';
+        errs.forEach(e => html += '• ' + e + '<br>');
+        $('#taskAlert').removeClass('d-none alert-info').addClass('alert-danger').html(html);
     }
 
-    function getTodoPriorityClass(priority) {
-        switch (priority) {
-            case 'High': return 'bg-danger';
-            case 'Low': return 'bg-info';
-            default: return 'bg-secondary';
-        }
-    }
-
-    function getTodoStatusClass(status) {
-        switch (status) {
-            case 'Completed': return 'bg-success';
-            case 'Hold': return 'bg-warning text-dark';
-            default: return 'bg-primary';
-        }
-    }
-
-    function formatTodoDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric'
-        });
-    }
-
-    function isTodoTaskOverdue(task) {
-        if (task.Status === 'Completed') return false;
-        const dueDate = new Date(task.DueDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return dueDate < today;
-    }
-
-    function getTodoDateDisplay(task) {
-        if (task.Status === 'Completed' && task.CompletedDate) {
-            return `<i class="fas fa-check-circle text-success me-1"></i>${formatTodoDate(task.CompletedDate)}`;
-        } else {
-            return `<i class="fas fa-calendar me-1"></i>${formatTodoDate(task.DueDate)}`;
-        }
-    }
-
-    function updateTodoTaskCount(count) {
-        $('#taskCount').text(`${count} task${count !== 1 ? 's' : ''}`);
-    }
-
-    function showTodoLoading(show) {
-        if (show) {
-            $('#loadingSpinner').removeClass('d-none');
-        } else {
-            $('#loadingSpinner').addClass('d-none');
-        }
-    }
-
-    function showTodoAlert(message, type = 'info') {
-        // Create alert element
-        const alertId = 'alert-' + Date.now();
-        const alertElement = $(`
-        <div class="alert alert-${type} alert-dismissible fade show position-fixed" 
-             id="${alertId}"
-             style="top: 80px; right: 20px; z-index: 9999; min-width: 300px; max-width: 500px;" 
-             role="alert">
-            <i class="fas fa-${getAlertIcon(type)} me-2"></i>${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    `);
-
-        // Add to body
-        $('body').append(alertElement);
-
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            $(`#${alertId}`).alert('close');
-        }, 5000);
-    }
-
-    function getAlertIcon(type) {
-        switch (type) {
-            case 'success': return 'check-circle';
-            case 'danger': return 'exclamation-triangle';
-            case 'warning': return 'exclamation-circle';
-            case 'info': return 'info-circle';
-            default: return 'bell';
-        }
+    function showTodoAlert(msg, type) {
+        const id = 'alert-' + Date.now();
+        const el = $(`<div id="${id}" class="alert alert-${type} alert-dismissible position-fixed" style="top:1rem;right:1rem;z-index:9999;">
+            ${msg}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`);
+        $('body').append(el);
+        setTimeout(() => el.alert('close'), 5000);
     }
 
     function initializeTooltips() {
-        // Dispose existing tooltips first
         $('[data-bs-toggle="tooltip"]').tooltip('dispose');
-
-        // Initialize new tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
+        $('[data-bs-toggle="tooltip"]').tooltip();
     }
 
     function setupAntiForgeryToken() {
-        // Get anti-forgery token and set up AJAX defaults
         const token = $('input[name="__RequestVerificationToken"]').val();
-        if (token) {
-            $.ajaxSetup({
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader('RequestVerificationToken', token);
-                }
-            });
-        }
+        if (token) $.ajaxSetup({ beforeSend: xhr => xhr.setRequestHeader('RequestVerificationToken', token) });
     }
 
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
+    function debounce(fn, ms) {
+        let timer;
+        return function (...args) {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn.apply(this, args), ms);
         };
     }
 
-    // FIXED: Added missing escapeHtml function
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+    function showTodoLoading(flag) {
+        flag ? $('#loadingSpinner').removeClass('d-none') : $('#loadingSpinner').addClass('d-none');
     }
 
-    // Global functions that can be called from HTML onclick events
-    window.openCreateModal = openCreateModal;
-    window.editTodoTask = editTodoTask;
-    window.deleteTodoTask = deleteTodoTask;
-    window.quickAddTodoTask = quickAddTodoTask;
-    window.refreshTodos = refreshTodos;
-
-    // Export functions if using module system
-    if (typeof module !== 'undefined' && module.exports) {
-        module.exports = {
-            loadAllTodos,
-            createTodoTask,
-            editTodoTask,
-            deleteTodoTask,
-            filterTodoTasks,
-            refreshTodos
-        };
+    function updateTodoTaskCount(c) {
+        $('#taskCount').text(`${c} task${c !== 1 ? 's' : ''}`);
     }
 
-    console.log('Todo.js loaded successfully - ALL BUGS FIXED');
-
+    // Expose refresh
+    window.refreshTodos = () => { clearGeneralFilters(); displayFilteredTasks(); }
 })();
