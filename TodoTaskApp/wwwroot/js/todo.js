@@ -43,6 +43,31 @@
             // Show modal
             new bootstrap.Modal(document.getElementById('taskModal')).show();
         });
+
+        // Export button
+        $('#exportBtn').off('click').on('click', function () {
+            showTodoAlert('Exporting tasks...', 'info');
+            window.location.href = '/Todo/ExportTasks';
+        });
+
+        // Import button
+        $('#importBtn').off('click').on('click', function () {
+            $('#importFileInput').click();
+        });
+
+        // File input change
+        $('#importFileInput').off('change').on('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                showTodoAlert('Please select a CSV file', 'warning');
+                return;
+            }
+
+            importTasks(file);
+        });
+
         // Create/update form
         $('#taskForm').off('submit').on('submit', function (e) {
             e.preventDefault();
@@ -149,6 +174,50 @@
 
         renderTaskTable(list);
     }
+
+    // Import tasks function
+    function importTasks(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const originalText = $('#importBtn').html();
+        $('#importBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Importing...');
+
+        $.ajax({
+            url: '/Todo/ImportTasks',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+            },
+            success: function (response) {
+                if (response.success) {
+                    showTodoAlert(response.message, 'success');
+                    loadAllTodos(); // Refresh task list
+
+                    // Show errors if any
+                    if (response.errors && response.errors.length > 0) {
+                        let errorMsg = 'Import completed with errors:\n';
+                        response.errors.forEach(err => errorMsg += '• ' + err + '\n');
+                        setTimeout(() => alert(errorMsg), 1000);
+                    }
+                } else {
+                    showTodoAlert(response.message || 'Import failed', 'danger');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Import error:', error);
+                showTodoAlert('Error importing file. Please try again.', 'danger');
+            },
+            complete: function () {
+                $('#importBtn').prop('disabled', false).html(originalText);
+                $('#importFileInput').val(''); // Clear file input
+            }
+        });
+    }
+
 
     // Render table
     function renderTaskTable(tasks) {

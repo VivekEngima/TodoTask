@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using TodoTaskApp.Models;
-using TodoTaskApp.IServices;
 using System.Diagnostics;
+using System.Text;
+using TodoTaskApp.IServices;
+using TodoTaskApp.Models;
 
 namespace TodoTaskApp.Controllers
 {
@@ -217,7 +218,154 @@ namespace TodoTaskApp.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+        // Export tasks to CSV
+        [HttpGet]
+        public async Task<IActionResult> ExportTasks()
+        {
+            try
+            {
+                var tasks = await _todoTaskService.GetAllTasksAsync();
+
+                var csv = new StringBuilder();
+                csv.AppendLine("Title,Description,Priority,Status,DueDate,CreatedDate");
+
+                foreach (var task in tasks)
+                {
+                    csv.AppendLine($"\"{task.Title}\",\"{task.Description ?? ""}\",\"{task.Priority}\",\"{task.Status}\",\"{task.DueDate:yyyy-MM-dd}\",\"{task.CreatedDate:yyyy-MM-dd}\"");
+                }
+
+                var bytes = Encoding.UTF8.GetBytes(csv.ToString());
+                var fileName = $"TodoTasks_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+
+                return File(bytes, "text/csv", fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error exporting tasks");
+                return Json(new { success = false, message = "Error exporting tasks" });
+            }
+        }
+
+        // Import tasks from CSV
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ImportTasks(IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                    return Json(new { success = false, message = "Please select a file" });
+
+                if (!Path.GetExtension(file.FileName).Equals(".csv", StringComparison.OrdinalIgnoreCase))
+                    return Json(new { success = false, message = "Only CSV files are supported" });
+
+                var tasks = new List<TodoTaskViewModel>();
+
+                using var reader = new StreamReader(file.OpenReadStream());
+                var line = await reader.ReadLineAsync(); // Skip header
+
+                int lineNumber = 1;
+                var errors = new List<string>();
+
+                while ((line = await reader.ReadLineAsync()) != null)
+                {
+                    lineNumber++;
+                    try
+                    {
+                        var values = ParseCsvLine(line);
+
+                        if (values.Length < 5)
+                        {
+                            errors.Add($"Line {lineNumber}: Insufficient columns");
+                            continue;
+                        }
+
+                        var task = new TodoTaskViewModel
+                        {
+                            Title = values[0]?.Trim().Trim('"') ?? "",
+                            Description = values[1]?.Trim().Trim('"'),
+                            Priority = values[2]?.Trim().Trim('"') ?? "Normal",
+                            Status = values[3]?.Trim().Trim('"') ?? "Pending",
+                            DueDate = DateTime.TryParse(values[4]?.Trim().Trim('"'), out var dueDate)
+                                ? dueDate : DateTime.Now.AddDays(7)
+                        };
+
+                        // Validate
+                        if (string.IsNullOrEmpty(task.Title))
+                        {
+                            errors.Add($"Line {lineNumber}: Title is required");
+                            continue;
+                        }
+
+                        if (!new[] { "High", "Normal", "Low" }.Contains(task.Priority))
+                            task.Priority = "Normal";
+
+                        if (!new[] { "Pending", "Hold", "Completed" }.Contains(task.Status))
+                            task.Status = "Pending";
+
+                        tasks.Add(task);
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"Line {lineNumber}: {ex.Message}");
+                    }
+                }
+
+                // Import valid tasks
+                int imported = 0;
+                foreach (var task in tasks)
+                {
+                    var taskId = await _todoTaskService.CreateTaskAsync(task);
+                    if (taskId > 0) imported++;
+                }
+
+                var message = $"Successfully imported {imported} tasks";
+                if (errors.Any())
+                    message += $". {errors.Count} errors occurred";
+
+                return Json(new
+                {
+                    success = true,
+                    message = message,
+                    imported = imported,
+                    errors = errors.Take(5) // Return first 5 errors
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error importing tasks");
+                return Json(new { success = false, message = "Error importing file" });
+            }
+        }
+
+        // Helper method to parse CSV line
+        private string[] ParseCsvLine(string line)
+        {
+            var result = new List<string>();
+            var inQuotes = false;
+            var current = new StringBuilder();
+
+            for (int i = 0; i < line.Length; i++)
+            {
+                char c = line[i];
+
+                if (c == '"')
+                {
+                    inQuotes = !inQuotes;
+                }
+                else if (c == ',' && !inQuotes)
+                {
+                    result.Add(current.ToString());
+                    current.Clear();
+                }
+                else
+                {
+                    current.Append(c);
+                }
+            }
+
+            result.Add(current.ToString());
+            return result.ToArray();
+        }
     }
-
-
 }
