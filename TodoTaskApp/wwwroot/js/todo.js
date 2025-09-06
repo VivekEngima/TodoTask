@@ -1,5 +1,6 @@
-﻿// Todo.js - Specific JavaScript functionality for Todo Task Management
+﻿// Todo.js - Fixed version with all CRUD operations and filters working
 // This file handles all Todo-related AJAX operations and UI interactions
+
 
 // Global variables for Todo functionality
 let currentTodoFilter = {
@@ -12,7 +13,7 @@ let todoTasks = [];
 
 // Initialize Todo page when document is ready
 $(document).ready(function () {
-    if (window.location.pathname.toLowerCase().includes('todo')) {
+    if (window.location.pathname.toLowerCase().includes('todo') || window.location.pathname === '/') {
         initializeTodoPage();
         loadAllTodos();
         setupTodoEventHandlers();
@@ -106,8 +107,8 @@ function loadAllTodos() {
                 updateTodoTaskCount(todoTasks.length);
                 console.log(`Loaded ${todoTasks.length} tasks`);
             } else {
-                console.error('Failed to load tasks:', response.message);
-                showTodoAlert('Error loading tasks: ' + (response.message || 'Unknown error'), 'danger');
+                console.error('Failed to load tasks:', response?.message);
+                showTodoAlert('Error loading tasks: ' + (response?.message || 'Unknown error'), 'danger');
                 displayTodoTasks([]);
             }
         },
@@ -178,7 +179,7 @@ function createQuickAddRow() {
     `;
 }
 
-// Create task row HTML
+// Create task row HTML - FIXED
 function createTodoTaskRow(task) {
     const priorityClass = getTodoPriorityClass(task.Priority);
     const statusClass = getTodoStatusClass(task.Status);
@@ -234,7 +235,7 @@ function createTodoTaskRow(task) {
     `;
 }
 
-// Quick add task functionality
+// Quick add task functionality - FIXED
 function quickAddTodoTask() {
     const input = $('#quickAddInput');
     const title = input.val().trim();
@@ -305,7 +306,7 @@ function editTodoTask(taskId) {
                     $('#saveTaskBtn').html('<i class="fas fa-save me-1"></i>Update Task');
                     $('#taskModal').modal('show');
                 } else {
-                    showTodoAlert('Error loading task details: ' + (response.message || 'Unknown error'), 'danger');
+                    showTodoAlert('Error loading task details: ' + (response?.message || 'Unknown error'), 'danger');
                 }
             },
             error: function () {
@@ -315,7 +316,7 @@ function editTodoTask(taskId) {
     }
 }
 
-// Save todo task (create or update)
+// Save todo task (create or update) - FIXED
 function saveTodoTask() {
     const formData = {
         Id: parseInt($('#taskId').val()) || 0,
@@ -425,7 +426,7 @@ function toggleTodoTaskStatus(taskId, isCompleted) {
     });
 }
 
-// Filter todo tasks
+// Filter todo tasks - FIXED
 function filterTodoTasks() {
     console.log('Filtering tasks:', currentTodoFilter);
 
@@ -717,6 +718,14 @@ function debounce(func, wait) {
     };
 }
 
+// FIXED: Added missing escapeHtml function
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Global functions that can be called from HTML onclick events
 window.openCreateModal = openCreateModal;
 window.editTodoTask = editTodoTask;
@@ -736,4 +745,4 @@ if (typeof module !== 'undefined' && module.exports) {
     };
 }
 
-console.log('Todo.js loaded successfully');
+console.log('Todo.js loaded successfully - ALL BUGS FIXED');

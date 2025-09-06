@@ -3,6 +3,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <form id="taskForm">
+                @Html.AntiForgeryToken()
                 <div class="modal-header">
                     <h5 class="modal-title" id="taskModalLabel">
                         <i class="fas fa-plus-circle me-2"></i>Add New Task

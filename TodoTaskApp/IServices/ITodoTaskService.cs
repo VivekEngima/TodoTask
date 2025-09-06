@@ -4,13 +4,13 @@ namespace TodoTaskApp.IServices
 {
     public interface ITodoTaskService
     {
-        Task<IEnumerable<TodoTaskViewModal>> GetAllTasksAsync();
-        Task<TodoTaskViewModal?> GetTaskByIdAsync(int id);
-        Task<int> CreateTaskAsync(TodoTaskViewModal model);
-        Task<bool> UpdateTaskAsync(TodoTaskViewModal model);
+        Task<IEnumerable<TodoTaskViewModel>> GetAllTasksAsync();
+        Task<TodoTaskViewModel?> GetTaskByIdAsync(int id);
+        Task<int> CreateTaskAsync(TodoTaskViewModel model);
+        Task<bool> UpdateTaskAsync(TodoTaskViewModel model);
         Task<bool> DeleteTaskAsync(int id);
         Task<bool> UpdateTaskStatusAsync(int id, string status);
-        Task<IEnumerable<TodoTaskViewModal>> FilterTasksAsync(FilterViewModel filter);
+        Task<IEnumerable<TodoTaskViewModel>> FilterTasksAsync(FilterViewModel filter);
         FilterViewModel GetFilterOptions();
     }
 }

@@ -13,25 +13,25 @@ namespace TodoTaskApp.Services
             _repository = repository;
         }
 
-        public async Task<IEnumerable<TodoTaskViewModal>> GetAllTasksAsync()
+        public async Task<IEnumerable<TodoTaskViewModel>> GetAllTasksAsync()
         {
             var tasks = await _repository.GetAllAsync();
             return tasks.Select(MapToViewModel);
         }
 
-        public async Task<TodoTaskViewModal?> GetTaskByIdAsync(int id)
+        public async Task<TodoTaskViewModel?> GetTaskByIdAsync(int id)
         {
             var task = await _repository.GetByIdAsync(id);
             return task != null ? MapToViewModel(task) : null;
         }
 
-        public async Task<int> CreateTaskAsync(TodoTaskViewModal model)
+        public async Task<int> CreateTaskAsync(TodoTaskViewModel model)
         {
             var task = MapToEntity(model);
             return await _repository.CreateAsync(task);
         }
 
-        public async Task<bool> UpdateTaskAsync(TodoTaskViewModal model)
+        public async Task<bool> UpdateTaskAsync(TodoTaskViewModel model)
         {
             var task = MapToEntity(model);
             return await _repository.UpdateAsync(task);
@@ -47,7 +47,7 @@ namespace TodoTaskApp.Services
             return await _repository.UpdateStatusAsync(id, status);
         }
 
-        public async Task<IEnumerable<TodoTaskViewModal>> FilterTasksAsync(FilterViewModel filter)
+        public async Task<IEnumerable<TodoTaskViewModel>> FilterTasksAsync(FilterViewModel filter)
         {
             var tasks = await _repository.FilterTasksAsync(filter.Status, filter.Priority, filter.SearchTerm);
             return tasks.Select(MapToViewModel);
@@ -58,9 +58,9 @@ namespace TodoTaskApp.Services
             return new FilterViewModel();
         }
 
-        private TodoTaskViewModal MapToViewModel(TodoTask task)
+        private TodoTaskViewModel MapToViewModel(TodoTask task)
         {
-            return new TodoTaskViewModal
+            return new TodoTaskViewModel
             {
                 Id = task.Id,
                 Title = task.Title,
@@ -74,7 +74,7 @@ namespace TodoTaskApp.Services
             };
         }
 
-        private TodoTask MapToEntity(TodoTaskViewModal model)
+        private TodoTask MapToEntity(TodoTaskViewModel model)
         {
             return new TodoTask
             {

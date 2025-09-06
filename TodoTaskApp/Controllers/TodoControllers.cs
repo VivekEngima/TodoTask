@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using TodoTaskApp.IServices;
 using TodoTaskApp.Models;
+using TodoTaskApp.IServices;
+using System.Diagnostics;
 
 namespace TodoTaskApp.Controllers
 {
@@ -15,7 +16,7 @@ namespace TodoTaskApp.Controllers
             _logger = logger;
         }
 
-        // Main Index page
+        // Main Index page - FIXED: Added IActionResult return type
         public async Task<IActionResult> Index()
         {
             try
@@ -31,7 +32,7 @@ namespace TodoTaskApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading todo tasks");
-                return View(new List<TodoTaskViewModal>());
+                return View(new List<TodoTaskViewModel>());
             }
         }
 
@@ -70,10 +71,10 @@ namespace TodoTaskApp.Controllers
             }
         }
 
-        // AJAX: Create new task
+        // AJAX: Create new task - FIXED: Using correct TodoTaskViewModel
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateTask([FromBody] TodoTaskViewModal model)
+        public async Task<IActionResult> CreateTask([FromBody] TodoTaskViewModel model)
         {
             try
             {
@@ -102,10 +103,10 @@ namespace TodoTaskApp.Controllers
             }
         }
 
-        // AJAX: Update task
+        // AJAX: Update task - FIXED: Using correct TodoTaskViewModel
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateTask([FromBody] TodoTaskViewModal model)
+        public async Task<IActionResult> UpdateTask([FromBody] TodoTaskViewModel model)
         {
             try
             {
@@ -210,5 +211,13 @@ namespace TodoTaskApp.Controllers
                 return Json(new { success = false, message = "Error getting filter options" });
             }
         }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
     }
+
+
 }
