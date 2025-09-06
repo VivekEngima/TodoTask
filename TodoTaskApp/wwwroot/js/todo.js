@@ -218,7 +218,6 @@
         });
     }
 
-
     // Render table
     function renderTaskTable(tasks) {
         const tbody = $('#tasksBody').empty();

@@ -103,9 +103,9 @@
             <input type="file" id="importFileInput" accept=".csv,.xlsx" style="display: none;" />
 
             <div class="card-body p-0">
-                <div class="table-responsive">
+                <div class="table-container" style="max-height: 600px; overflow-y: auto;">
                     <table class="table table-hover mb-0" id="tasksTable">
-                        <thead class="table-light">
+                        <thead class="table-light sticky-top">
                             <tr>
                                 <th style="width: 40%">Tasks</th>
                                 <th style="width: 15%">Priority</th>
@@ -115,16 +115,7 @@
                             </tr>
                         </thead>
                         <tbody id="tasksBody">
-                            <tr>
-                                <td colspan="5" class="text-center py-4">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" placeholder="Type here to create new task..." id="quickAddInput">
-                                        <button class="btn btn-primary" type="button" onclick="quickAddTask()">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                            <!-- Tasks will be loaded via AJAX -->
                         </tbody>
                     </table>
                 </div>
