@@ -12,10 +12,7 @@ builder.Services.AddControllersWithViews();
 // Add Dapper Context
 builder.Services.AddScoped<DapperContext>();
 
-// Add Repository Layer
 builder.Services.AddScoped<ITodoTaskRepository, TodoTaskRepository>();
-
-// Add Service Layer
 builder.Services.AddScoped<ITodoTaskService, TodoTaskService>();
 
 // Add JSON options for better serialization
@@ -41,6 +38,11 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "dashboard",
+    pattern: "Dashboard/{action=Index}",
+    defaults: new { controller = "Dashboard" });
 
 app.MapControllerRoute(
     name: "default",

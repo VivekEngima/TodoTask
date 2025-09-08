@@ -89,5 +89,46 @@ namespace TodoTaskApp.Services
                 CompletedDate = model.CompletedDate
             };
         }
+
+        public async Task<DashboardViewModel> GetDashboardStatisticsAsync()
+        {
+            var allTasks = await _repository.GetAllAsync();
+            var today = DateTime.Now.Date;
+
+            var dashboard = new DashboardViewModel
+            {
+                TotalTasks = allTasks.Count(),
+                CompletedTasks = allTasks.Count(t => t.Status == "Completed"),
+                PendingTasks = allTasks.Count(t => t.Status == "Pending"),
+                OnHoldTasks = allTasks.Count(t => t.Status == "Hold"),
+                UpcomingTasks = allTasks.Count(t => t.DueDate.Date > today && t.Status != "Completed"),
+                HighPriorityTasks = allTasks.Count(t => t.Priority == "High"),
+                NormalPriorityTasks = allTasks.Count(t => t.Priority == "Normal"),
+                LowPriorityTasks = allTasks.Count(t => t.Priority == "Low")
+            };
+
+            // Calculate weekly task creation for last 5 weeks
+            var twelveWeeksAgo = today.AddDays(-42); // 5 weeks * 7 days
+            var weeklyData = new List<WeeklyTaskData>();
+
+            for (int i = 0; i < 5; i++)
+            {
+                var weekStart = twelveWeeksAgo.AddDays(i * 7);
+                var weekEnd = weekStart.AddDays(6);
+
+                var tasksCreatedThisWeek = allTasks.Count(t =>
+                    t.CreatedDate.Date >= weekStart && t.CreatedDate.Date <= weekEnd);
+
+                weeklyData.Add(new WeeklyTaskData
+                {
+                    WeekLabel = $"Week {i + 1}",
+                    TasksCreated = tasksCreatedThisWeek,
+                    WeekStartDate = weekStart
+                });
+            }
+
+            dashboard.WeeklyTaskCreation = weeklyData;
+            return dashboard;
+        }
     }
 }

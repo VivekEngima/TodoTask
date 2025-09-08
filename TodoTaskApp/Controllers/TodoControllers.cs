@@ -17,7 +17,6 @@ namespace TodoTaskApp.Controllers
             _logger = logger;
         }
 
-        // Main Index page - FIXED: Added IActionResult return type
         public async Task<IActionResult> Index()
         {
             try

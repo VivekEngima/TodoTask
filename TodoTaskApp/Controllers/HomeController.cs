@@ -14,16 +14,18 @@ namespace TodoTaskApp.Controllers
         }
 
         // Automatically redirect to Todo application
-        //public IActionResult Index()
-        //{
-        //    return RedirectToAction("Index", "Todo");
-        //}
-
-        // Alternative: Show a welcome page with navigation to Todo app
         public IActionResult Index()
         {
-            return View();
+            return RedirectToAction("Index", "Todo");
         }
+
+        // Alternative: Show a welcome page with navigation to Todo app
+        //public IActionResult Index()
+        //{
+        //    return View();
+        //}
+
+        // 
 
         public IActionResult Privacy()
         {

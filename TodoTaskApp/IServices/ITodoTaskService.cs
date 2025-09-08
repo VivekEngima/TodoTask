@@ -12,5 +12,7 @@ namespace TodoTaskApp.IServices
         Task<bool> UpdateTaskStatusAsync(int id, string status);
         Task<IEnumerable<TodoTaskViewModel>> FilterTasksAsync(FilterViewModel filter);
         FilterViewModel GetFilterOptions();
+
+        Task<DashboardViewModel> GetDashboardStatisticsAsync();
     }
 }

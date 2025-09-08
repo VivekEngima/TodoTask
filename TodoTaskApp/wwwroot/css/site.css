@@ -194,3 +194,137 @@ body {
         z-index: 1010;
         background-color: #f8f9fa;
     }
+
+/* Dashboard-specific styles - TodoTask Theme */
+.stats-icon {
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+/* Line chart container - full width */
+.line-chart-container {
+    height: 250px;
+    position: relative;
+}
+
+/* Donut chart containers - side by side */
+.donut-chart-container {
+    height: 200px;
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+/* Progress bars */
+.progress {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar {
+    transition: width 1.5s ease-in-out;
+}
+
+/* Card styling */
+.card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+
+/* Dashboard animations */
+@keyframes dashboardFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#dashboardContent {
+    animation: dashboardFadeIn 0.6s ease-in-out;
+}
+
+/* Ensure proper spacing */
+.container-fluid {
+    max-height: 100vh;
+    overflow-y: auto;
+}
+
+/* Loading spinner */
+#loadingSpinner .spinner-border {
+    border-color: #0d6efd;
+    border-right-color: transparent;
+}
+
+/* Error message */
+#errorMessage {
+    border-left: 4px solid #dc3545;
+}
+
+/* Badge styling */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .line-chart-container {
+        height: 200px;
+    }
+
+    .donut-chart-container {
+        height: 180px;
+    }
+
+    .stats-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .line-chart-container {
+        height: 180px;
+    }
+
+    .donut-chart-container {
+        height: 160px;
+    }
+}
+
+/* Ensure charts are properly sized */
+canvas {
+    max-height: 100% !important;
+}
+
+/* Fix any overflow issues */
+.row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* Dashboard specific spacing */
+.g-3 {
+    --bs-gutter-x: 1rem;
+    --bs-gutter-y: 1rem;
+}
+
+.mb-4 {
+    margin-bottom: 1.5rem !important;
+}

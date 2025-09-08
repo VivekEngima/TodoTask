@@ -363,7 +363,6 @@
             $('#taskModal').modal('show');
         }
     };
-
     // Save (create/update) task
     function saveTodoTask() {
         const form = $('#taskForm');
@@ -452,7 +451,7 @@
             .fail(() => cb(false));
     }
 
-    // Helpers: formatting, badges, validation, alerts, tooltips, debounce
+    // Helpers: formatting, badges, validation, alerts, tooltips
 
     function getBadgeClass(val, type) {
         if (type === 'priority') {

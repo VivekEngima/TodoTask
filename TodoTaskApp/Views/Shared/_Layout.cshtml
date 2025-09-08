@@ -15,21 +15,12 @@
                 <a class="navbar-brand fw-bold" asp-area="" asp-controller="Todo" asp-action="Index">
                     <i class="fas fa-tasks me-2"></i>Todo Task App
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
-                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Todo" ? "active" : "")"
-                               asp-area="" asp-controller="Todo" asp-action="Index">
-                                <i class="fas fa-list me-1"></i>My Tasks
-                            </a>
-                        </li>
-                    </ul>
+                <div class="col-md-2">
+                    <a href="/Dashboard" class="btn btn-info w-100">
+                        <i class="fas fa-chart-bar me-2"></i>Dashboard
+                    </a>
                 </div>
-            </div>
+                </div>
         </nav>
     </header>
 

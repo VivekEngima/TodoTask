@@ -1,0 +1,205 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container-fluid py-3">
+    <!-- Header -->
+    <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="text-primary fw-bold mb-1">Dashboard</h2>
+                <p class="text-muted mb-0">Overview of your todo tasks and statistics</p>
+            </div>
+            <div>
+                <a href="/Todo" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-tasks me-2"></i>Back to Tasks
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="text-center py-4">
+        <div class="spinner-border text-primary" role="status" style="width: 2.5rem; height: 2.5rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted">Loading dashboard statistics...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div id="errorMessage" class="alert alert-danger d-none" role="alert">
+        <h5 class="alert-heading">Error!</h5>
+        <p class="mb-2">Unable to load dashboard statistics. Please try refreshing the page.</p>
+        <button class="btn btn-outline-danger btn-sm" onclick="window.location.reload()">
+            <i class="fas fa-refresh me-2"></i>Retry
+        </button>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div id="dashboardContent" class="d-none">
+        <!-- Statistics Cards - 4 Cards in One Row -->
+        <div class="row g-3 mb-4">
+            <!-- Total Tasks -->
+            <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center py-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="card-title text-muted mb-0">Total Tasks</h6>
+                            <div class="badge bg-primary rounded-circle stats-icon">
+                                <i class="fas fa-list-check"></i>
+                            </div>
+                        </div>
+                        <h2 class="fw-bold text-primary mb-1" id="totalTasksCount">0</h2>
+                        <small class="text-muted">in system</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming -->
+            <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center py-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="card-title text-muted mb-0">Upcoming</h6>
+                            <div class="badge bg-success rounded-circle stats-icon">
+                                <i class="fas fa-calendar-days"></i>
+                            </div>
+                        </div>
+                        <h2 class="fw-bold text-success mb-1" id="upcomingTasksCount">0</h2>
+                        <small class="text-muted">due future</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completed -->
+            <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center py-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="card-title text-muted mb-0">Completed</h6>
+                            <div class="badge bg-success rounded-circle stats-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                        <h2 class="fw-bold text-success mb-2" id="completedPercentage">0%</h2>
+                        <div class="progress mb-2" style="height: 8px;">
+                            <div class="progress-bar bg-success" id="completedProgressBar" style="width: 0%"></div>
+                        </div>
+                        <small class="text-muted">of all tasks</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending -->
+            <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center py-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="card-title text-muted mb-0">Pending</h6>
+                            <div class="badge bg-warning rounded-circle stats-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                        <h2 class="fw-bold text-warning mb-2" id="pendingPercentage">0%</h2>
+                        <div class="progress mb-2" style="height: 8px;">
+                            <div class="progress-bar bg-warning" id="pendingProgressBar" style="width: 0%"></div>
+                        </div>
+                        <small class="text-muted">of all tasks</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Line Chart Section - Full Width -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="card-title mb-0 text-primary">Task Creation Trends</h5>
+                        <small class="text-muted">Tasks created over 5 weeks</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="line-chart-container">
+                            <canvas id="weeklyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Donut Charts Section - Side by Side at Bottom -->
+        <div class="row g-3">
+            <!-- Priority Distribution Chart -->
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="card-title mb-0 text-primary">Priority Distribution</h5>
+                        <small class="text-muted">Tasks by priority level</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="donut-chart-container">
+                            <canvas id="priorityChart"></canvas>
+                        </div>
+                        <!-- Priority Stats -->
+                        <div class="row mt-3 text-center">
+                            <div class="col-4">
+                                <span class="badge bg-danger">High</span>
+                                <div class="fw-bold mt-1" id="highPriorityCount">0</div>
+                                <small class="text-muted" id="highPriorityPercentage">0%</small>
+                            </div>
+                            <div class="col-4">
+                                <span class="badge bg-secondary">Normal</span>
+                                <div class="fw-bold mt-1" id="normalPriorityCount">0</div>
+                                <small class="text-muted" id="normalPriorityPercentage">0%</small>
+                            </div>
+                            <div class="col-4">
+                                <span class="badge bg-info">Low</span>
+                                <div class="fw-bold mt-1" id="lowPriorityCount">0</div>
+                                <small class="text-muted" id="lowPriorityPercentage">0%</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Distribution Chart -->
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="card-title mb-0 text-primary">Status Distribution</h5>
+                        <small class="text-muted">Tasks by current status</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="donut-chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                        <!-- Status Stats -->
+                        <div class="row mt-3 text-center">
+                            <div class="col-4">
+                                <span class="badge bg-primary">Pending</span>
+                                <div class="fw-bold mt-1" id="pendingTasksCount">0</div>
+                                <small class="text-muted" id="pendingTasksPercentage">0%</small>
+                            </div>
+                            <div class="col-4">
+                                <span class="badge bg-warning text-dark">Hold</span>
+                                <div class="fw-bold mt-1" id="holdTasksCount">0</div>
+                                <small class="text-muted" id="holdTasksPercentage">0%</small>
+                            </div>
+                            <div class="col-4">
+                                <span class="badge bg-success">Done</span>
+                                <div class="fw-bold mt-1" id="completedTasksCount">0</div>
+                                <small class="text-muted" id="completedTasksPercentage">0%</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="~/js/dashboard.js"></script>
+}
