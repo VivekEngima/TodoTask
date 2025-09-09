@@ -196,135 +196,200 @@ body {
     }
 
 /* Dashboard-specific styles - TodoTask Theme */
-.stats-icon {
-    width: 35px;
-    height: 35px;
+.compact-card {
+    min-height: 120px;
+}
+
+    .compact-card .card-body {
+        padding: 0.75rem !important;
+    }
+
+/* BIGGER NUMBERS styling */
+.big-number {
+    font-size: 2.5rem !important;
+    line-height: 1.1;
+    font-weight: 700 !important;
+}
+
+.compact-icon {
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
+    font-size: 0.7rem;
 }
 
-/* Line chart container - full width */
-.line-chart-container {
-    height: 250px;
+/* Compact progress bars */
+.compact-progress {
+    height: 4px;
+    margin-bottom: 0.25rem;
+}
+
+/* Chart containers - Allow proper sizing for tooltips */
+.line-chart-compact {
+    height: 160px;
     position: relative;
+    /* overflow: hidden; <- REMOVE this to fix tooltips */
 }
 
-/* Donut chart containers - side by side */
-.donut-chart-container {
-    height: 200px;
+.donut-chart-compact {
+    height: 140px;
     position: relative;
-    margin-bottom: 1rem;
+    /* overflow: hidden; <- REMOVE this to fix tooltips */
 }
 
-/* Progress bars */
-.progress {
-    background-color: rgba(0, 0, 0, 0.1);
+.polar-chart-compact {
+    height: 140px;
+    position: relative;
+    /* overflow: hidden; <- REMOVE this to fix tooltips */
 }
 
-.progress-bar {
-    transition: width 1.5s ease-in-out;
+/* Smaller badges */
+.badge-sm {
+    font-size: 0.65rem !important;
+    padding: 0.25rem 0.4rem;
 }
 
-/* Card styling */
-.card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+/* Compact card headers */
+.card-header {
+    padding: 0.4rem 0.6rem !important;
 }
 
-    .card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+.card-body {
+    padding: 0.6rem !important;
+}
+
+/* Smaller fonts for compact view (except big numbers) */
+.compact-card .small {
+    font-size: 0.75rem;
+}
+
+/* Compact grid spacing */
+.g-2 {
+    --bs-gutter-x: 0.5rem;
+    --bs-gutter-y: 0.5rem;
+}
+
+/* Compact margins */
+.mb-3 {
+    margin-bottom: 0.75rem !important;
+}
+
+.mb-2 {
+    margin-bottom: 0.5rem !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .line-chart-compact {
+        height: 140px;
     }
 
-/* Dashboard animations */
-@keyframes dashboardFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
+    .donut-chart-compact,
+    .polar-chart-compact {
+        height: 120px;
     }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    .big-number {
+        font-size: 2.2rem !important;
     }
 }
 
-#dashboardContent {
-    animation: dashboardFadeIn 0.6s ease-in-out;
+@media (max-width: 992px) {
+    .line-chart-compact {
+        height: 120px;
+    }
+
+    .donut-chart-compact,
+    .polar-chart-compact {
+        height: 110px;
+    }
+
+    .big-number {
+        font-size: 2rem !important;
+    }
 }
 
-/* Ensure proper spacing */
-.container-fluid {
-    max-height: 100vh;
-    overflow-y: auto;
+@media (max-width: 768px) {
+    .line-chart-compact {
+        height: 140px;
+    }
+
+    .donut-chart-compact,
+    .polar-chart-compact {
+        height: 130px;
+    }
+
+    .big-number {
+        font-size: 1.8rem !important;
+    }
+
+    .compact-card {
+        min-height: 110px;
+    }
 }
 
-/* Loading spinner */
+/* Loading and error state styling */
 #loadingSpinner .spinner-border {
     border-color: #0d6efd;
     border-right-color: transparent;
 }
 
-/* Error message */
 #errorMessage {
     border-left: 4px solid #dc3545;
 }
 
-/* Badge styling */
-.badge {
-    font-size: 0.75rem;
-    padding: 0.4rem 0.6rem;
+/* Card styling */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .line-chart-container {
-        height: 200px;
-    }
-
-    .donut-chart-container {
-        height: 180px;
-    }
-
-    .stats-icon {
-        width: 30px;
-        height: 30px;
-        font-size: 0.8rem;
-    }
-
-    .card-body {
-        padding: 1rem;
-    }
+/* Dashboard page specific container */
+.dashboard-page .container-fluid {
+    max-width: 100% !important;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    height: calc(100vh - 80px); /* Account for header */
+    overflow-y: auto;
 }
 
-@media (max-width: 576px) {
-    .line-chart-container {
-        height: 180px;
-    }
-
-    .donut-chart-container {
-        height: 160px;
-    }
-}
-
-/* Ensure charts are properly sized */
-canvas {
-    max-height: 100% !important;
-}
-
-/* Fix any overflow issues */
-.row {
+.dashboard-page .row {
     margin-left: 0;
     margin-right: 0;
 }
 
-/* Dashboard specific spacing */
-.g-3 {
-    --bs-gutter-x: 1rem;
-    --bs-gutter-y: 1rem;
+/* Custom scrollbar for dashboard only */
+.dashboard-page .container-fluid::-webkit-scrollbar {
+    width: 8px;
 }
 
-.mb-4 {
-    margin-bottom: 1.5rem !important;
+.dashboard-page .container-fluid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.dashboard-page .container-fluid::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+    .dashboard-page .container-fluid::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+/* Ensure Chart.js tooltips can render properly */
+.chart-container {
+    position: relative !important;
+}
+
+/* Fix for Chart.js tooltip positioning */
+canvas {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Make sure tooltips appear above other elements */
+.chartjs-tooltip {
+    z-index: 9999 !important;
 }

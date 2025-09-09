@@ -1,6 +1,6 @@
 ﻿(function () {
     // Global variables
-    let weeklyChart = null;
+    let monthlyChart = null;
     let priorityChart = null;
     let statusChart = null;
 
@@ -67,19 +67,17 @@
 
     // Populate statistics cards with data
     function populateStatistics(data) {
-        // Animate numbers counting up
-        animateNumber('#totalTasksCount', 0, data.TotalTasks, 1000);
-        animateNumber('#upcomingTasksCount', 0, data.UpcomingTasks, 1200);
+        // Set numbers
+        $('#totalTasksCount').text(data.TotalTasks);
+        $('#upcomingTasksCount').text(data.UpcomingTasks);
 
         // Update percentages
         $('#completedPercentage').text(data.CompletedPercentage + '%');
         $('#pendingPercentage').text(data.PendingPercentage + '%');
 
-        // Update progress bars with animation
-        setTimeout(() => {
-            $('#completedProgressBar').css('width', data.CompletedPercentage + '%');
-            $('#pendingProgressBar').css('width', data.PendingPercentage + '%');
-        }, 500);
+        // Update progress bars 
+        $('#completedProgressBar').css('width', data.CompletedPercentage + '%');
+        $('#pendingProgressBar').css('width', data.PendingPercentage + '%');
 
         // Update priority counts and percentages
         $('#highPriorityCount').text(data.HighPriorityTasks);
@@ -102,27 +100,27 @@
 
     // Create all charts
     function createCharts(data) {
-        createWeeklyChart(data.WeeklyTaskCreation);
+        createMonthlyChart(data.MonthlyTaskCreation);
         createPriorityChart(data);
-        createStatusChart(data);
+        createStatusPolarChart(data);
     }
 
-    // Create weekly task creation line chart
-    function createWeeklyChart(weeklyData) {
-        const ctx = document.getElementById('weeklyChart').getContext('2d');
+    // Create monthly task creation line chart (1 month before and after today)
+    function createMonthlyChart(monthlyData) {
+        const ctx = document.getElementById('monthlyChart').getContext('2d');
 
         // Destroy existing chart if exists
-        if (weeklyChart) {
-            weeklyChart.destroy();
+        if (monthlyChart) {
+            monthlyChart.destroy();
         }
 
-        weeklyChart = new Chart(ctx, {
+        monthlyChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: weeklyData.map(w => w.WeekLabel),
+                labels: monthlyData.map(d => d.DateLabel),
                 datasets: [{
                     label: 'Tasks Created',
-                    data: weeklyData.map(w => w.TasksCreated),
+                    data: monthlyData.map(d => d.TasksCreated),
                     borderColor: '#0d6efd',
                     backgroundColor: 'rgba(13, 110, 253, 0.1)',
                     tension: 0.4,
@@ -130,13 +128,14 @@
                     pointBackgroundColor: '#0d6efd',
                     pointBorderColor: '#ffffff',
                     pointBorderWidth: 2,
-                    pointRadius: 5,
-                    pointHoverRadius: 7
+                    pointRadius: 4,
+                    pointHoverRadius: 6
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: false, 
                 plugins: {
                     legend: {
                         display: false
@@ -170,7 +169,8 @@
                         },
                         ticks: {
                             stepSize: 1,
-                            color: '#6c757d'
+                            color: '#6c757d',
+                            font: { size: 10 }
                         }
                     },
                     x: {
@@ -178,7 +178,9 @@
                             display: false
                         },
                         ticks: {
-                            color: '#6c757d'
+                            color: '#6c757d',
+                            font: { size: 10 },
+                            maxRotation: 45
                         }
                     }
                 },
@@ -202,18 +204,19 @@
         priorityChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['High Priority', 'Normal Priority', 'Low Priority'],
+                labels: ['High', 'Normal', 'Low'],
                 datasets: [{
                     data: [data.HighPriorityTasks, data.NormalPriorityTasks, data.LowPriorityTasks],
                     backgroundColor: ['#dc3545', '#6c757d', '#0dcaf0'],
                     borderWidth: 0,
-                    hoverBorderWidth: 3,
+                    hoverBorderWidth: 2,
                     hoverBorderColor: '#ffffff'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: false, 
                 cutout: '60%',
                 plugins: {
                     legend: {
@@ -226,7 +229,7 @@
                         borderColor: '#0d6efd',
                         borderWidth: 1,
                         cornerRadius: 6,
-                        displayColors: true,
+                        displayColors: false,
                         callbacks: {
                             label: function (context) {
                                 const percentage = data.TotalTasks > 0 ?
@@ -240,8 +243,8 @@
         });
     }
 
-    // Create status distribution donut chart
-    function createStatusChart(data) {
+    // Create status distribution polar area chart
+    function createStatusPolarChart(data) {
         const ctx = document.getElementById('statusChart').getContext('2d');
 
         // Destroy existing chart if exists
@@ -250,60 +253,117 @@
         }
 
         statusChart = new Chart(ctx, {
-            type: 'doughnut',
+            type: 'polarArea',
             data: {
                 labels: ['Pending', 'Hold', 'Completed'],
                 datasets: [{
                     data: [data.PendingTasks, data.OnHoldTasks, data.CompletedTasks],
-                    backgroundColor: ['#0d6efd', '#ffc107', '#198754'],
-                    borderWidth: 0,
-                    hoverBorderWidth: 3,
-                    hoverBorderColor: '#ffffff'
+                    backgroundColor: [
+                        'rgba(13, 110, 253, 0.7)',  // Blue for Pending
+                        'rgba(255, 193, 7, 0.7)',   // Yellow for Hold
+                        'rgba(25, 135, 84, 0.7)'    // Green for Completed
+                    ],
+                    borderColor: [
+                        '#0d6efd',
+                        '#ffc107',
+                        '#198754'
+                    ],
+                    borderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '60%',
+                animation: false,
+                layout: {
+                    padding: {
+                        top: 20,
+                        bottom: 20,
+                        left: 20,
+                        right: 20
+                    }
+                },
                 plugins: {
                     legend: {
                         display: false
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        enabled: true,
+                        external: null, // Use default tooltip rendering
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
                         titleColor: '#ffffff',
                         bodyColor: '#ffffff',
-                        borderColor: '#0d6efd',
+                        borderColor: '#ffffff',
                         borderWidth: 1,
-                        cornerRadius: 6,
+                        cornerRadius: 8,
                         displayColors: true,
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 12
+                        },
+                        padding: 12,
+                        caretPadding: 8,
                         callbacks: {
+                            title: function (context) {
+                                return context[0].label; // Show status name
+                            },
                             label: function (context) {
-                                const percentage = data.TotalTasks > 0 ?
-                                    Math.round((context.parsed / data.TotalTasks) * 100) : 0;
-                                return `${context.label}: ${context.parsed} (${percentage}%)`;
+                                const value = context.parsed;
+                                const total = data.TotalTasks;
+                                const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                return `Tasks: ${value} (${percentage}%)`;
+                            },
+                            labelColor: function (context) {
+                                return {
+                                    borderColor: context.dataset.borderColor[context.dataIndex],
+                                    backgroundColor: context.dataset.backgroundColor[context.dataIndex]
+                                };
                             }
                         }
                     }
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: Math.max(data.PendingTasks, data.OnHoldTasks, data.CompletedTasks) + 1,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)',
+                            lineWidth: 1
+                        },
+                        ticks: {
+                            stepSize: 1,
+                            color: '#6c757d',
+                            font: { size: 9 },
+                            display: false,
+                            backdropColor: 'transparent'
+                        },
+                        pointLabels: {
+                            font: {
+                                size: 11,
+                                weight: '500'
+                            },
+                            color: '#495057',
+                            padding: 15
+                        },
+                        angleLines: {
+                            color: 'rgba(0, 0, 0, 0.1)',
+                            lineWidth: 1
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'nearest'
+                },
+                hover: {
+                    mode: 'nearest',
+                    intersect: false
                 }
             }
         });
-    }
-
-    // Animate number counting up
-    function animateNumber(selector, start, end, duration) {
-        const element = $(selector);
-        const increment = (end - start) / (duration / 16); // ~60fps
-        let current = start;
-
-        const timer = setInterval(() => {
-            current += increment;
-            if (current >= end) {
-                current = end;
-                clearInterval(timer);
-            }
-            element.text(Math.floor(current));
-        }, 16);
     }
 
     // Setup anti-forgery token for AJAX requests

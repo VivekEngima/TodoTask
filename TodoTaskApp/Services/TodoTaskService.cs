@@ -107,27 +107,29 @@ namespace TodoTaskApp.Services
                 LowPriorityTasks = allTasks.Count(t => t.Priority == "Low")
             };
 
-            // Calculate weekly task creation for last 5 weeks
-            var twelveWeeksAgo = today.AddDays(-42); // 5 weeks * 7 days
-            var weeklyData = new List<WeeklyTaskData>();
+            // Calculated daily task creation for 1 month before and after today (2 months total)
+            var oneMonthBefore = today.AddMonths(-1);
+            var oneMonthAfter = today.AddMonths(1);
+            var dailyData = new List<DailyTaskData>();
 
-            for (int i = 0; i < 5; i++)
+            // Generate data for each day in the 2-month period
+            for (var date = oneMonthBefore; date <= oneMonthAfter; date = date.AddDays(1))
             {
-                var weekStart = twelveWeeksAgo.AddDays(i * 7);
-                var weekEnd = weekStart.AddDays(6);
+                var tasksCreatedThisDay = allTasks.Count(t => t.CreatedDate.Date == date);
 
-                var tasksCreatedThisWeek = allTasks.Count(t =>
-                    t.CreatedDate.Date >= weekStart && t.CreatedDate.Date <= weekEnd);
-
-                weeklyData.Add(new WeeklyTaskData
+                // Only add days with tasks or show every 3rd day to avoid overcrowding
+                if (tasksCreatedThisDay > 0 || date.Day % 3 == 1)
                 {
-                    WeekLabel = $"Week {i + 1}",
-                    TasksCreated = tasksCreatedThisWeek,
-                    WeekStartDate = weekStart
-                });
+                    dailyData.Add(new DailyTaskData
+                    {
+                        DateLabel = date.ToString("MMM d"),
+                        TasksCreated = tasksCreatedThisDay,
+                        Date = date
+                    });
+                }
             }
 
-            dashboard.WeeklyTaskCreation = weeklyData;
+            dashboard.MonthlyTaskCreation = dailyData;
             return dashboard;
         }
     }

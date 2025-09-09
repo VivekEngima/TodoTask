@@ -23,14 +23,14 @@ namespace TodoTaskApp.Models
         public decimal NormalPriorityPercentage => TotalTasks > 0 ? Math.Round((decimal)NormalPriorityTasks / TotalTasks * 100, 1) : 0;
         public decimal LowPriorityPercentage => TotalTasks > 0 ? Math.Round((decimal)LowPriorityTasks / TotalTasks * 100, 1) : 0;
 
-        // Weekly Task Creation
-        public List<WeeklyTaskData> WeeklyTaskCreation { get; set; } = new();
+        // Monthly Daily Task Creation (1 month before and after today)
+        public List<DailyTaskData> MonthlyTaskCreation { get; set; } = new();
     }
 
-    public class WeeklyTaskData
+    public class DailyTaskData
     {
-        public string WeekLabel { get; set; } = string.Empty; // "Week 1", "Week 2", etc.
+        public string DateLabel { get; set; } = string.Empty; // "Sep 1", "Sep 2", etc.
         public int TasksCreated { get; set; }
-        public DateTime WeekStartDate { get; set; }
+        public DateTime Date { get; set; }
     }
 }
